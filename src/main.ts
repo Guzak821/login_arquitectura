@@ -12,7 +12,7 @@ async function bootstrap() {
   app.setViewEngine('hbs'); 
 
   // 2. Configurar directorio de archivos estáticos (CSS, JS)
-  app.useStaticAssets(join(__dirname, '..', 'public')); // Crea una carpeta 'public'
+  app.useStaticAssets(join(__dirname, '..', 'public')); // carpeta 'public'
 
   await app.listen(3000);
 }
