@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro de Usuario</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .error { color: red; text-align: center; margin-bottom: 15px; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 10px; margin: 8px 0; display: inline-block; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background-color: #45a049; }
+        p { text-align: center; margin-top: 15px; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crear user</h1>
+        
+        {{#if error}}
+            <p class="error">⚠️ {{error}}</p>
+        {{/if}}
+
+        <form method="POST" action="/register">
+            <label for="email"><b>Correo (Usuario)</b></label>
+            <input type="email" placeholder="Ingresa tu correo" name="email" required>
+
+            <label for="password"><b>Contraseña</b></label>
+            <input type="password" placeholder="Ingresa tu contraseña" name="password" required>
+
+            <button type="submit">Registrarse</button>
+        </form>
+
+        <p>¿Ya tienes una cuenta? <a href="/login">Iniciar Sesión</a></p>
+    </div>
+</body>
+</html>
