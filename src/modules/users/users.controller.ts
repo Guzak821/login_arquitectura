@@ -20,6 +20,13 @@ export class UsersController {
     return res.redirect('/login'); 
   }
 
+  // VISTA de Bienvenida (GET /welcome)
+  @Get('welcome')
+  @Render('welcome')
+  showWelcomePage() {
+    return { message: '¡Bienvenido!' };
+  }
+  
   // **VISTA de Login (GET /login)**
   @Get('login')
   @Render('login')
