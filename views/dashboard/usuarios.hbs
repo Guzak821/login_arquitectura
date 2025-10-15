@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - {{viewTitle}}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos Generales y Layout */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* BARRA LATERAL (SIDEBAR) */
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 10px 0 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar nav {
+            flex-grow: 1;
+        }
+
+        .sidebar a {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 15px 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: #34495e;
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Botón de Cerrar Sesión */
+        .logout-section {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 0;
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 30px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #333;
+        }
+        
+        /* Contenedor principal blanco para el contenido */
+        .dashboard-body {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-height: 80vh;
+        }
+        
+        /* === ESTILOS ESPECÍFICOS DE USUARIOS === */
+        .users-container h3 {
+            display: none; /* Ocultar el título H3 para usar el H1 del header */
+        }
+
+        /* Estilos de la Barra de Búsqueda */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .search-button {
+            padding: 10px 15px;
+            background-color: #3498db; 
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Estilos de la Tabla */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
+        }
+
+        .users-table thead th {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .users-table tbody tr {
+            background-color: white;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .users-table tbody td {
+            padding: 12px 15px;
+        }
+        
+        .users-table .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Tags de Rol */
+        .role-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .role-Admin { background-color: #2ecc71; color: white; }
+        .role-User { background-color: #f1c40f; color: #333; }
+
+        /* Botones de Acción */
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 5px;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        .view-btn { color: #3498db; }
+        .edit-btn { color: #f39c12; }
+        .delete-btn { color: #e74c3c; }
+        .action-btn:hover { opacity: 0.8; }
+        
+        /* === ESTILOS DE PERFIL (Mantenidos para completitud) === */
+        .profile-card {
+            margin: 0 auto;
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .profile-icon { color: #3498db; margin-bottom: 25px; }
+        .profile-form { text-align: left; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #f9f9f9; }
+        .form-group input:disabled { background-color: #eee; color: #777; }
+        .password-note { font-size: 0.9em; color: #999; margin-bottom: 20px; text-align: center; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
+        .button-group { text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 15px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        .btn-save { background-color: #3498db; color: white; }
+        .btn-save:hover { background-color: #2980b9; }
+        .btn-cancel { background-color: #e74c3c; color: white; }
+        .btn-cancel:hover { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    
+    <div class="sidebar">
+        <div class="logo">
+            PRINCIPAL<br>DASHBOARD
+        </div>
+        
+        <nav>
+            <a href="/dashboard/usuarios" class="{{#if isUsersView}}active{{/if}}">
+                <i class="fas fa-users"></i> Usuarios
+            </a>
+            <a href="/dashboard/perfil" class="{{#if isProfileView}}active{{/if}}">
+                <i class="fas fa-user-circle"></i> Perfil
+            </a>
+        </nav>
+        
+        <div class="logout-section">
+            <a href="/login" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <h1>{{viewTitle}}</h1> 
+        </div>
+
+        <div class="dashboard-body">
+            {{#if isUsersView}}
+            <div class="users-container">
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar usuario por nombre, email o ID..." class="search-input">
+                    <button class="search-button">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            
+                <div class="table-responsive">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each users}}
+                            <tr>
+                                <td>{{this.id}}</td>
+                                <td>{{this.name}}</td>
+                                <td>{{this.email}}</td>
+                                <td><span class="role-tag role-{{this.role}}">{{this.role}}</span></td>
+                                <td class="text-center">
+                                    <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="5" class="no-data">No hay usuarios registrados.</td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if isProfileView}}
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-icon">
+                        <i class="fas fa-user-circle fa-5x"></i>
+                    </div>
+                    <form class="profile-form">
+                        <div class="form-group">
+                            <label for="profile-name">Nombre:</label>
+                            <input type="text" id="profile-name" value="{{user.name}}" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-email">Email:</label>
+                            <input type="email" id="profile-email" value="{{user.email}}" disabled>
+                        </div>
+                        <hr>
+                        <p class="password-note">Para cambiar tu contraseña, ingresa la nueva y confírmala:</p>
+                        <div class="form-group">
+                            <label for="profile-password">Nueva Contraseña:</label>
+                            <input type="password" id="profile-password" placeholder="********">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-confirm-password">Confirmar Contraseña:</label>
+                            <input type="password" id="profile-confirm-password" placeholder="********">
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-save"><i class="fas fa-check"></i> Cambiar</button>
+                            <button type="button" class="btn btn-cancel"><i class="fas fa-times"></i> Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>

@@ -20,9 +20,9 @@ export class UsersController {
     return res.redirect('/login'); 
   }
 
-  // VISTA de Bienvenida (GET /welcome)
-  @Get('welcome')
-  @Render('welcome')
+  // VISTA de Bienvenida (GET /PrincipalDashboard)
+  @Get('PrincipalDashboard')
+  @Render('PrincipalDashboard')
   showWelcomePage() {
     return { message: '¡Bienvenido!' };
   }
@@ -41,10 +41,45 @@ export class UsersController {
 
     if (user) {
       // Éxito: Redirigir a una página de bienvenida (por ejemplo)
-      return res.redirect('/welcome'); 
+      return res.redirect('/PrincipalDashboard'); 
     } else {
       // Fallo: Mostrar la vista de login con un mensaje de error
       return res.render('login', { errorMessage: 'Credenciales inválidas.' });
     }
+  }
+
+// VISTA de Usuarios (GET /dashboard/usuarios)
+@Get('dashboard/usuarios') 
+@Render('dashboard/usuarios') // Renderiza el layout principal
+async listUsers() {
+    const users = await this.usersService.findAll();
+    return { 
+        viewTitle: 'Administración de Usuarios', // Para el H1 del header
+        isUsersView: true,                       // Activa el bloque {{#if isUsersView}}
+        users: users                             // Pasa la data para la tabla
+    }; 
+}
+
+  // VISTA de Perfil (GET /dashboard/perfil)
+@Get('dashboard/perfil')
+@Render('dashboard/perfil')
+showProfile() {
+  return { 
+    viewTitle: 'Configuración de Perfil y Contraseña', // Título grande del encabezado
+    isProfileView: true,                             // Habilita el bloque de código del perfil
+    user: { name: 'Usuario Actual', email: 'email@ejemplo.com' } // Datos de ejemplo para los inputs
+  }; 
+}
+
+// Metodo buscar usuarios
+@Get('dashboard/search-users')
+@Render('dashboard/search-users')
+async searchUsers(@Body() searchData: any) {
+    const users = await this.usersService.findAll(); 
+    return { 
+        viewTitle: 'Buscar Usuarios', 
+        isSearchUsersView: true, 
+        users: users 
+    }; 
   }
 }

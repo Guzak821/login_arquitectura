@@ -14,15 +14,11 @@ export class UsersService {
     ) {}
 
   async createUser(email: string, password: string): Promise<User> {
-    // 1. Verificar si el usuario ya existe... (omito el código aquí)
-    
-    // 🔑 CLAVE: Usar .create() para que TypeORM maneje el 'id'
     const newUser = this.usersRepository.create({ email, password }); 
     
     // El método .save() devuelve la entidad con el 'id' generado
     return this.usersRepository.save(newUser); 
 }
-
   /**
    * Busca un usuario por correo y verifica la contraseña.
    * @param email El correo a buscar.
@@ -36,13 +32,14 @@ export class UsersService {
       return null; // Usuario no encontrado
     }
 
-    // const isMatch = await bcrypt.compare(password_input, user.password_hash);
-    
-    // Simulación simple:
     if (user.password === password_input) {
       return user; // Éxito: Contraseña coincide
     }
-    
-    return null; // Contraseña incorrecta
+        return null; // Contraseña incorrecta
   }
+
+  async findAll(): Promise<User[]> {
+    return this.usersRepository.find();
+  }
+
 }
