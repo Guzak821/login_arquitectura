@@ -298,7 +298,7 @@
                             {{#each users}}
                             <tr>
                                 <td>{{this.id}}</td>
-                                <td>{{this.name}}</td>
+                                <td>{{this.nombre}}</td>
                                 <td>{{this.email}}</td>
                                 <td><span class="role-tag role-{{this.role}}">{{this.role}}</span></td>
                                 <td class="text-center">
@@ -327,7 +327,7 @@
                     <form class="profile-form">
                         <div class="form-group">
                             <label for="profile-name">Nombre:</label>
-                            <input type="text" id="profile-name" value="{{user.name}}" disabled>
+                            <input type="text" id="profile-name" value="{{user.nombre}}" disabled>
                         </div>
                         <div class="form-group">
                             <label for="profile-email">Email:</label>
