@@ -11,15 +11,20 @@ import {
     UseGuards,
     UnauthorizedException
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport'; 
+import { CommandBus } from '@nestjs/cqrs'; // Nuevo: Inyectaremos el CommandBus a través del Gateway
+
 import type { Request } from 'express'; 
-import { UpdatePasswordDto } from 'src/modules/DTO/UpdatePasswordDto';
+import { UpdatePasswordDto } from 'src/modules/DTO/UpdatePasswordDto'; // DTOs antiguos de password
 import { UsuarioDao } from './DAO/UsuarioDao';
 import { AuthService } from 'src/auth/auth.service';
-import { AuthGuard } from '@nestjs/passport'; 
 import { User } from 'src/auth/decorators/user.decorator'; 
 import { UsersService } from './users.service';
-import { IsNotEmpty, IsString, Length, IsDefined } from 'class-validator';
 
+// DTOs para el flujo CQRS
+import { RegisterDto } from '../DTO/register.dto'; // DTO de registro
+import { UpdateProfileDto } from '../DTO/update.profile'; // DTO de actualización de perfil
+import { UsuariosCQRS } from 'src/cqrs/usuarios.cqrs'; // Gateway de CQRS
 
 // Interfaz de la Carga Útil del JWT (Payload)
 interface JwtPayload {
@@ -32,7 +37,8 @@ interface JwtPayload {
 export class UsersController {
     constructor(
         private readonly usuarioDao: UsuarioDao,
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+        private readonly usuariosCQRS: UsuariosCQRS // ✅ Nuevo: Inyección del Gateway CQRS
     ) {}
 
     // --- RUTAS DE AUTENTICACIÓN Y REGISTRO ---
@@ -43,10 +49,17 @@ export class UsersController {
         return { title: 'Registro de Usuario' };
     }
 
+    // ✅ FLUIDO CQRS: REGISTRO (Vista > Controlador > CQRS > DAO)
     @Post('register')
-    async register(@Body() userData: any, @Res() res: any) {
-        await this.authService.registerUser(userData.nombre, userData.email, userData.password); 
-        return res.redirect('/login'); 
+    @UsePipes(new ValidationPipe({ transform: true })) // Aplicar validación DTO
+    async register(@Body() registerData: RegisterDto, @Res() res: any) { // Usamos el DTO de Registro
+        try {
+            await this.usuariosCQRS.insert(registerData); // 🎯 Despacha el comando de registro
+            return res.redirect('/login'); 
+        } catch (error) {
+            // Manejar error de validación o DB (ej: email ya existe)
+            return res.render('register', { errorMessage: error.message || 'Error al registrar.' }); 
+        }
     }
     
     @Get('PrincipalDashboard')
@@ -63,21 +76,17 @@ export class UsersController {
 
     @Post('login')
     async login(@Body() userData: any, @Res() res: any) {
-        // 1. Validar las credenciales
         const user = await this.authService.validateUser(userData.email, userData.password);
 
         if (user) {
-            // CLAVE: 2. Generar el token y la respuesta de login
             const result = await this.authService.login(user);
 
-            // CLAVE: 3. Guardar el token en la cookie ANTES de redirigir
             res.cookie('jwt', result.access_token, { 
-                httpOnly: true, // Seguridad: previene ataques XSS desde JavaScript
-                secure: process.env.NODE_ENV === 'production', // Solo en HTTPS
-                maxAge: 3600000 // 1 hora de validez (debe coincidir con la configuración de JwtModule)
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 3600000
             });
 
-            // 4. Redirigir
             return res.redirect('/PrincipalDashboard'); 
         } else {
             return res.render('login', { errorMessage: 'Credenciales inválidas.' });
@@ -86,6 +95,7 @@ export class UsersController {
 
     // --- RUTAS PROTEGIDAS CON IDENTIDAD DINÁMICA ---
 
+    // ✅ Consulta: Pasa por Vista > Controlador > DAO (sin cambios)
     @UseGuards(AuthGuard('jwt')) 
     @Get('dashboard/usuarios') 
     @Render('dashboard/usuarios')
@@ -102,6 +112,9 @@ export class UsersController {
     @Get('dashboard/perfil')
     @Render('dashboard/perfil')
     showProfile(@User() user: JwtPayload) { 
+        // ⚠️ Nota: Para esta vista, si solo queremos cambiar la contraseña, el DTO UpdatePasswordDto es suficiente. 
+        // Si queremos cambiar Nombre/Email, usaríamos UpdateProfileDto. 
+        // Mantendremos la lógica simple aquí.
         return { 
             viewTitle: 'Configuración de Contraseña',
             isProfileView: true,
@@ -112,6 +125,7 @@ export class UsersController {
     @Get('dashboard/search-users')
     @Render('dashboard/search-users')
     async searchUsers(@Body() searchData: any) {
+        // Consulta: Pasa por Vista > Controlador > DAO (sin cambios)
         const users = await this.usuarioDao.findAll(); 
         return { 
             viewTitle: 'Buscar Usuarios', 
@@ -120,33 +134,37 @@ export class UsersController {
         }; 
     }
 
+    // ✅ FLUIDO CQRS: ACTUALIZACIÓN (Vista > Controlador > CQRS > DAO)
     @UseGuards(AuthGuard('jwt'))
-    @Post('dashboard/perfil/update-password')
-    @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    async updatePassword(
-        @Body() updatePasswordDto: UpdatePasswordDto, 
-        @Res() res: any, 
-        @User() user: JwtPayload
-    ) {
-        const { current_pass, new_pass } = updatePasswordDto;
+@Post('dashboard/perfil/update-password')
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+async updatePassword(
+    @Body() updatePasswordDto: UpdatePasswordDto, // Usamos el DTO de contraseña
+    @Res() res: any, 
+    @User() user: JwtPayload
+) {
+    const { current_pass, new_pass } = updatePasswordDto; // Extraemos del DTO de contraseña
+
+    try {
+        // Despachamos el comando de actualización de perfil vía CQRS
+        await this.usuariosCQRS.update(user.id, { nombre: user.nombre, password: new_pass }); 
         
-        try {
-            await this.authService.updatePassword(user.id, user.email, current_pass, new_pass);
-            
-            return res.render('dashboard/perfil', {
-                viewTitle: 'Configuración de Contraseña',
-                isProfileView: true,
-                user: { nombre: user.nombre, email: user.email },
-                successMessage: 'Contraseña actualizada exitosamente.'
-            });
-            
-        } catch (error) {
-            return res.render('dashboard/perfil', {
-                viewTitle: 'Configuración de Contraseña',
-                isProfileView: true,
-                user: { nombre: user.nombre, email: user.email },
-                errorMessage: error.message || 'Error desconocido al actualizar la contraseña.'
-            });
-        }
+        // Renderizado de éxito
+        return res.render('dashboard/perfil', {
+            viewTitle: 'Configuración de Contraseña',
+            isProfileView: true,
+            user: { nombre: user.nombre, email: user.email },
+            successMessage: 'Contraseña actualizada exitosamente.'
+        });
+        
+    } catch (error) {
+        // ... (Renderizado de error)
+        return res.render('dashboard/perfil', {
+            viewTitle: 'Configuración de Contraseña',
+            isProfileView: true,
+            user: { nombre: user.nombre, email: user.email },
+            errorMessage: error.message || 'Error al actualizar el perfil.'
+        });
     }
+}
 }
