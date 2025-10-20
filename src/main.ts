@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
+const cookieParser = require('cookie-parser');
+
 // const hbs = require('express-handlebars'); // Handlebars
 
 async function bootstrap() {
@@ -21,6 +23,9 @@ async function bootstrap() {
     forbidNonWhitelisted: true, // Esto lanza un error si se envían propiedades extra
     transform: true, // Esto transforma el cuerpo a la instancia de la clase DTO
   }));
+
+app.use(cookieParser());
+
   // 3. Iniciar la aplicación en el puerto 3000
   await app.listen(3000);
 }
