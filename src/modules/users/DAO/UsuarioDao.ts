@@ -76,5 +76,7 @@ export class UsuarioDao {
         return this.userRepository.save(newUser); 
     }
 
-    
+    async saveEntity(user: User): Promise<User> {
+        return this.userRepository.save(user);
+    }
 }

@@ -43,7 +43,7 @@ export class AuthService {
     }
     
     /**
-     * ✅ Método para firmar y generar el token JWT.
+     * Método para firmar y generar el token JWT.
      * @param user Objeto de usuario validado (sin contraseña).
      * @returns Objeto con la identidad del usuario y el token de acceso.
      */
@@ -57,28 +57,30 @@ export class AuthService {
         };
     }
 
-    // 3. Lógica de CAMBIO DE CONTRASEÑA: Usa el ID/Email dinámico del token.
-    async updatePassword(id: number, email: string, currentPassword: string, newPassword: string): Promise<boolean> {
-        
-        const user = await this.usuarioDao.findByEmailWithPassword(email); 
+   async updatePassword(id: number, email: string, currentPassword: string, newPassword: string): Promise<string> {
+    
+    const user = await this.usuarioDao.findByEmailWithPassword(email); 
 
-        if (!user) {
-            throw new UnauthorizedException('Usuario no encontrado.'); 
-        }
-        
-        // Verifica que el ID inyectado coincida con el ID del usuario
-        if (user.id !== id) {
-            throw new UnauthorizedException('Error de identidad en la solicitud.');
-        }
+    if (!user) {
+        throw new UnauthorizedException('Usuario no encontrado.'); 
+    }
+    
+    // Verifica que el ID inyectado coincida con el ID del usuario
+    if (user.id !== id) {
+        throw new UnauthorizedException('Error de identidad en la solicitud.');
+    }
 
-        const isCurrentMatch = await bcrypt.compare(currentPassword, user.password);
+    // 1. Verificar la contraseña actual
+    const isCurrentMatch = await bcrypt.compare(currentPassword, user.password);
 
-        if (!isCurrentMatch) {
-            throw new UnauthorizedException('Contraseña actual incorrecta.'); 
-        }
-        
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        return this.usuarioDao.updateUserPassword(user.id, hashedPassword);
-    }
+    if (!isCurrentMatch) {
+        throw new UnauthorizedException('Contraseña actual incorrecta.'); 
+    }
+    
+    // 2. Generar el nuevo hash
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // CLAVE: Devolvemos el hash, NO LLAMAMOS AL DAO.
+    return hashedPassword; 
+}
 }

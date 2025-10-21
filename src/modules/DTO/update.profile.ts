@@ -1,27 +1,41 @@
-// src/modules/users/dtos/update-profile.dto.ts
-
 import { IsOptional, IsString, Length, IsNotEmpty, IsEmail } from 'class-validator';
+import { Match } from 'src/common/validators/match.validator';
 
 /**
- * DTO para la actualización del perfil.
- * Contiene validaciones para el nombre de usuario y un campo de contraseña opcional.
+ * DTO COMPLETO para la actualización de perfil y contraseña.
+ * Incluye campos opcionales para la actualización de datos y los campos de contraseña para la validación.
  */
 export class UpdateProfileDto {
-    // El nombre es opcional si el usuario solo quiere cambiar la contraseña, pero si se envía, se valida.
+    // --- DATOS DE PERFIL ---
     @IsOptional()
     @IsString({ message: 'El nombre debe ser una cadena de texto.' })
-    @Length(1, 30, { message: 'El nombre debe contener un máximo de 30 caracteres.' }) // Máximo 30 caracteres
+    @Length(1, 30, { message: 'El nombre debe contener un máximo de 30 caracteres.' })
     nombre?: string;
 
-    // La contraseña en este DTO es opcional si solo se actualiza el nombre, 
-    // pero si se envía, debe cumplir con el mínimo de 6 caracteres.
-    @IsOptional()
-    @IsString({ message: 'La contraseña debe ser una cadena de texto.' })
-    @Length(6, 50, { message: 'La contraseña debe tener un mínimo de 6 caracteres.' }) // Mínimo 6 caracteres
-    password?: string;
-
-    // Si quieres permitir la actualización del email:
     @IsOptional()
     @IsEmail({}, { message: 'Formato de correo electrónico inválido.' })
     email?: string;
+
+    // --- DATOS DE CONTRASEÑA (Para el flujo de cambio) ---
+    // NOTA: Estos campos son opcionales, pero si alguno se envía, se valida el resto.
+
+    // 1. Contraseña Actual (obligatoria si se cambia la contraseña)
+    @IsOptional() 
+    @IsString()
+    current_pass?: string;
+
+    // 2. Nueva Contraseña
+    @IsOptional()
+    @IsString()
+    @Length(6, 50, { message: 'La nueva contraseña debe tener un mínimo de 6 caracteres.' }) 
+    new_pass?: string;
+
+    // 3. Confirmación de Nueva Contraseña
+    @IsOptional()
+    @IsString()
+    // ⚠️ CLAVE: Valida que coincida con new_pass
+    @Match('new_pass', {
+        message: 'La nueva contraseña y su confirmación deben ser iguales.',
+    })
+    confirm_pass?: string;
 }
