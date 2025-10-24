@@ -6,7 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import { ExternalUsersController } from './external/external-users.controller'; 
-
+import { ExternalApiMockModule } from './apiservice/external-api-mock/external-api-mock.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -15,10 +16,13 @@ import { ExternalUsersController } from './external/external-users.controller';
       database: 'dao.sqlite',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       cache: false,
-      synchronize: true
+      synchronize: true,
+      
     }),
     UsersModule, 
     AuthModule,
+    HttpModule,
+    ExternalApiMockModule,
   ],
   controllers: [AppController, ExternalUsersController],
   providers: [AppService, AuthService],

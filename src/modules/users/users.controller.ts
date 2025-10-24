@@ -26,6 +26,9 @@ import { RegisterDto } from 'src/modules/DTO/register.dto';
 import { UpdateProfileDto } from 'src/modules/DTO/update.profile'; 
 import { UsuariosCQRS } from 'src/cqrs/usuarios.cqrs'; // Gateway de CQRS
 
+// Importaciones del DDD
+import { ApiExternaService } from 'src/apiservice/api_externa_service';
+
 // Interfaz de la Carga Útil del JWT (Payload)
 interface JwtPayload {
     id: number;
@@ -33,11 +36,12 @@ interface JwtPayload {
     nombre: string;
 }
 
-@Controller()
+@Controller('usuarios')
 export class UsersController {
     constructor(
         private readonly usuarioDao: UsuarioDao,
         private readonly authService: AuthService,
+        private readonly apiExternaService: ApiExternaService,
         private readonly usuariosCQRS: UsuariosCQRS 
     ) {}
 
@@ -48,19 +52,34 @@ export class UsersController {
     showRegisterForm() {
         return { title: 'Registro de Usuario' };
     }
+// FLUIDO CQRS: REGISTRO (Vista > Controlador > CQRS > DAO)
+@Post('register')
+@UsePipes(new ValidationPipe({ transform: true }))
+async register(@Body() registerData: RegisterDto, @Res() res: any) {
+    try {
+      
+        await this.usuariosCQRS.insert(registerData); 
 
-    // FLUIDO CQRS: REGISTRO (Vista > Controlador > CQRS > DAO)
-    @Post('register')
-    @UsePipes(new ValidationPipe({ transform: true })) // Aplicar validación DTO
-    async register(@Body() registerData: RegisterDto, @Res() res: any) { // Usamos el DTO de Registro
-        try {
-            await this.usuariosCQRS.insert(registerData); // Despacha el comando de registro
-            return res.redirect('/login'); 
-        } catch (error) {
-            // Manejar error de validación o DB (ej: email ya existe)
-            return res.render('register', { errorMessage: error.message || 'Error al registrar.' }); 
-        }
+            // 2. Preparar los datos para la API externa
+        const externalData = {
+            Usr: registerData.email,    // Mapeo: email -> Usr
+            Pss: registerData.password, // Mapeo: password -> Pss
+            PssConfirmacion: registerData.password 
+        };
+        // 3. Llamar al servicio de API externa para registrar el usuario allí también
+        await this.apiExternaService.insertUsuario(externalData); 
+
+        // 3. Redirección o respuesta final
+        return res.redirect('/login'); 
+        
+    } catch (error) {
+        // Manejar errores. Puedes diferenciar si el error vino del CQRS local o del servicio externo
+        // (el ApiExternaService ya maneja errores y lanza una excepción si falla la API externa).
+        
+        console.error("Error en el registro (local o externo):", error.message);
+        return res.render('register', { errorMessage: 'Error al registrar. Intente de nuevo.' }); 
     }
+}
     
     @Get('PrincipalDashboard')
     @Render('PrincipalDashboard')
@@ -165,5 +184,21 @@ export class UsersController {
                 errorMessage: error.message || 'Error al actualizar el perfil.'
             });
         }
+    }
+
+    @Get()
+    async obtenerTodosLosUsuarios() {
+        // 1. Obtener usuarios locales (DAO/CQRS)
+        const usuariosLocales = await this.usuarioDao.getAllUsers(); 
+        
+        // 2. Obtener usuarios de la API externa (API-a-API)
+        const usuariosExternos = await this.apiExternaService.getUsuarios();
+
+        // 3. Fusionar y devolver
+        return {
+            locales: usuariosLocales,
+            externos: usuariosExternos,
+            todos: [...usuariosLocales, ...usuariosExternos],
+        };
     }
 }

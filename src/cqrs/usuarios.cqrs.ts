@@ -24,4 +24,7 @@ export class UsuariosCQRS {
         // Ejecuta el comando de actualización
         return this.commandBus.execute(new UpdateProfileCommand(userId, updateData));
     }
-}
+
+    // 3. método adicional para obtener todos los usuarios 
+   
+    }

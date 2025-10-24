@@ -79,4 +79,10 @@ export class UsuarioDao {
     async saveEntity(user: User): Promise<User> {
         return this.userRepository.save(user);
     }
+
+    async getAllUsers(): Promise<User[]> {
+        return this.userRepository.find({
+            select: ['id', 'nombre', 'email'] // Excluye la contraseña
+        });
+    }
 }
