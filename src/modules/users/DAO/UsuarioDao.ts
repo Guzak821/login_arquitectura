@@ -46,7 +46,7 @@ export class UsuarioDao {
     async findByEmailWithPassword(email: string): Promise<User | null> {
         const user = await this.userRepository.findOne({ 
             where: { email },
-            // ⚠️ CLAVE: Incluir la contraseña explícitamente para el login/verificación
+            //  CLAVE: Incluir la contraseña explícitamente para el login/verificación
             select: ['id', 'nombre', 'email', 'password'] 
         });
         return user || null;
