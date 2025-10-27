@@ -21,11 +21,11 @@
     <div class="container">
         <h1>Crear user</h1>
         
-        {{#if error}}
-            <p class="error">⚠️ {{error}}</p>
-        {{/if}}
+        <p class="error" id="error-message"></p>
 
-        <form method="POST" action="/usuarios/register">
+        <div id="loading-spinner" style="display:none; text-align: center;">Cargando...</div>
+        
+        <form id="register-form"> 
 
             <label for="nombre">Nombre Completo</label>
             <input type="text" placeholder="Ingresa tu nombre completo" name="nombre" required>
@@ -41,5 +41,7 @@
 
         <p>¿Ya tienes una cuenta? <a href="/usuarios/login">Iniciar Sesión</a></p>
     </div>
+    
+    <script type="module" src="/js/register.acoplamiento.js"></script>
 </body>
 </html>

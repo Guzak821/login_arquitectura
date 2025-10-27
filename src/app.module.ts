@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { ExternalUsersController } from './external/external-users.controller'; 
 import { ExternalApiMockModule } from './apiservice/external-api-mock/external-api-mock.module';
 import { HttpModule } from '@nestjs/axios';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -18,6 +20,11 @@ import { HttpModule } from '@nestjs/axios';
       cache: false,
       synchronize: true,
       
+    }),
+    ServeStaticModule.forRoot({
+      // Asegúrate de que 'public' sea el nombre de tu carpeta de archivos estáticos
+      rootPath: join(__dirname, '..', 'public'), 
+      // La opción 'serveRoot' se puede usar si quieres prefijar tus archivos (ej. /static/js)
     }),
     UsersModule, 
     AuthModule,
