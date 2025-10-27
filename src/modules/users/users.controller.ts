@@ -66,16 +66,14 @@ async register(@Body() registerData: RegisterDto, @Res() res: any) {
             Pss: registerData.password, // Mapeo: password -> Pss
             PssConfirmacion: registerData.password 
         };
-        // 3. Llamar al servicio de API externa para registrar el usuario allí también
+        // 3. Llamar al servicio de API externa para registrar el usuario también
         await this.apiExternaService.insertUsuario(externalData); 
 
         // 3. Redirección o respuesta final
-        return res.redirect('/login'); 
+        return res.redirect('/usuarios/login'); 
         
     } catch (error) {
-        // Manejar errores. Puedes diferenciar si el error vino del CQRS local o del servicio externo
-        // (el ApiExternaService ya maneja errores y lanza una excepción si falla la API externa).
-        
+       
         console.error("Error en el registro (local o externo):", error.message);
         return res.render('register', { errorMessage: 'Error al registrar. Intente de nuevo.' }); 
     }
@@ -106,7 +104,7 @@ async register(@Body() registerData: RegisterDto, @Res() res: any) {
                 maxAge: 3600000
             });
 
-            return res.redirect('/PrincipalDashboard'); 
+            return res.redirect('/usuarios/PrincipalDashboard'); 
         } else {
             return res.render('login', { errorMessage: 'Credenciales inválidas.' });
         }
@@ -168,7 +166,7 @@ async register(@Body() registerData: RegisterDto, @Res() res: any) {
             // Usamos los datos actualizados para el renderizado
             const updatedUser = { nombre: updateData.nombre || user.nombre, email: updateData.email || user.email };
 
-            return res.render('dashboard/perfil', {
+            return res.render('/usuarios/dashboard/perfil', {
                 viewTitle: 'Configuración de Perfil y Contraseña',
                 isProfileView: true,
                 user: updatedUser, 
@@ -177,7 +175,7 @@ async register(@Body() registerData: RegisterDto, @Res() res: any) {
             
         } catch (error) {
             // Manejamos el error
-            return res.render('dashboard/perfil', {
+            return res.render('/usuarios/dashboard/perfil', {
                 viewTitle: 'Configuración de Perfil y Contraseña',
                 isProfileView: true,
                 user: { nombre: user.nombre, email: user.email },

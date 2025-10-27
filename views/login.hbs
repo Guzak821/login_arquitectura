@@ -29,7 +29,7 @@
             <p class="error">Error {{error}}</p>
         {{/if}}
 
-        <form method="POST" action="/login">
+        <form method="POST" action="/usuarios/login">
             <label for="email"><b>Correo (Usuario)</b></label>
             <input type="email" placeholder="Ingresa tu correo" name="email" required>
 
@@ -39,7 +39,7 @@
             <button type="submit">Login</button>
         </form>
         
-        <p>¿No tienes cuenta? <a href="/register">Regístrate aquí</a></p>
+        <p>¿No tienes cuenta? <a href="/usuarios/register">Regístrate aquí</a></p>
     </div>
 </body>
 </html>
