@@ -6,7 +6,6 @@ export class Usuario {
         this.password = password;
     }
 
-    // Método para ser usado en pantalla
     getPresentacion() {
         return `Usuario: ${this.email} | Nombre: ${this.nombre}`;
     }
